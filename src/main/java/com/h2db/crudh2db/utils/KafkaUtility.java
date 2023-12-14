@@ -1,84 +1,86 @@
 package com.h2db.crudh2db.utils;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.h2db.crudh2db.entity.SpaceCollector;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import javax.persistence.Entity;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-//import static net.mguenther.kafka.junit.EmbeddedKafkaCluster.provisionWith;
-//import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
+
 
 @Component
 public class KafkaUtility {
     @Value("${spring.kafka.consumer.bootstrap-servers}")
     private String consumerBootstrapServer;
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaUtility.class);
 
-    public  AdminClient getAdminClient() {
-        System.out.println("admin"+consumerBootstrapServer);
+    public AdminClient getAdminClient() {
         Properties properties = new Properties();
-
-
         properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, consumerBootstrapServer);
         return AdminClient.create(properties);
     }
 
-    public  Set<String> getAllTopics(AdminClient adminClient) throws ExecutionException, InterruptedException {
+    public Set<String> getAllTopics(AdminClient adminClient) throws ExecutionException, InterruptedException {
         ListTopicsResult topics = adminClient.listTopics();
         return topics.names().get();
     }
-    //Check Topic is present
-//public  void checkTopicExist(AdminClient adminClient ,String topicName) throws ExecutionException, InterruptedException {
-    public  TopicDescription checkTopicExist(AdminClient adminClient,String topicName) throws ExecutionException, InterruptedException,ResourceNotFoundException {
 
-        Set<String> topicList = adminClient.listTopics().names().get();
-//        DescribeTopicsResult topicsResult=adminClient.describeTopics(topicList);
-//        //DescribeTopicsResult topicsResult=adminClient.describeTopics(adminClient.listTopics().names().get());
-//        TopicDescription topicDescription = topicsResult.allTopicNames().get().get(topicName);
-//        if(topicDescription == null) {
-//            throw new ResourceNotFoundException("Topic - "+topicName+" not found !;");
-//        }
-//        //return topicsResult.allTopicNames().get().get(topicName);
-//        //return topicsResult.values().get(topicName).get();
+
+    public TopicDescription checkTopicExist(AdminClient adminClient, String topicName) throws ExecutionException, InterruptedException, ResourceNotFoundException {
 
         ListTopicsResult topics = adminClient.listTopics();
         topics.names().get().forEach(System.out::println);
-
+        // Get the List of Topics in server
+        Set<String> topicList = adminClient.listTopics().names().get();
+        // Get the details of all topics
         DescribeTopicsResult topicsResult = adminClient.describeTopics(topicList);
         System.out.println(topicsResult);
-        final TopicDescription topicDescription = topicsResult.values().get(topicName).get();
+        // Check the topic exist by name
+        final TopicDescription topicDescription = topicsResult.allTopicNames().get().get(topicName);
+        // If not found throw exception
+        if (topicDescription == null) {
+            throw new ResourceNotFoundException("Topic - " + topicName + " not found !;");
+        }
         System.out.println("Description of demo topic:" + topicDescription);
         return topicDescription;
     }
 
-    //Check Topic is accessible
-//    public  TopicDescription checkTopicAccessible(String topicName) throws ExecutionException, InterruptedException {
-//        AdminClient adminClient = getAdminClient();
-//        Set<String> topicList = getAllTopics();
-//        DescribeTopicsResult demoTopic=adminClient.describeTopics(topicList);
-//        //return demoTopic.allTopicNames().get().get(topicName);
-//        return demoTopic.values().get(topicName).get();
+//    public Boolean validateJson(String message,Class<?> tClass) {
+//        try {
+//            ObjectMapper mapper = new ObjectMapper();
+//            mapper.readValue(message,tClass);
+//
+//        }catch (JsonProcessingException jsonProcessingException){
+//        LOGGER.error("Invalid Json message format:{}",jsonProcessingException.getMessage());
+//        return false;
+//        }
+//        return true;
 //    }
 
-    //validate json received from topic
-//    public boolean validateMessage(String topic){
-//        ObjectMapper mapper = new ObjectMapper();
-//        try {
-//            var grant = mapper.readValue(topic, Person.class);
-//            System.out.println(grant);
-//        } catch (JsonProcessingException e) {
-//            e.printStackTrace();
-//        }
-//
-//    }
+    public Boolean validateJson(String message,Class<SpaceCollector> spaceCollectorClass) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            SpaceCollector spaceCollector = mapper.readValue(message,spaceCollectorClass);
+            System.out.println(spaceCollector.toString());
+            if(spaceCollector.getId() == 0) {
+
+            }
+        }catch (JsonProcessingException jsonProcessingException){
+            LOGGER.error("Invalid Json message format:{}",jsonProcessingException.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
 
 }

@@ -19,11 +19,4 @@ class ExternalKafkaClusterTest {
         System.out.println("tttttttttttttttttopic"+topicConfig);
     }
 
-    @Test
-    @DisplayName("should be able to access the topic ")
-    void givenKafkaTopic_Name_whenRead_thenAccessible() throws Exception {
-        ExternalKafkaCluster kafka = ExternalKafkaCluster.at("localhost:9092");
-        List<Pojo> consumedRecords = kafka.read(ReadKeyValues.from("test-topic"))
-        //values.size()
-    }
 }

@@ -1,6 +1,9 @@
 package com.h2db.crudh2db.controller;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.h2db.crudh2db.entity.SpaceCollector;
 import com.h2db.crudh2db.kafka.KafkaProducer;
 import com.h2db.crudh2db.utils.KafkaUtility;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -35,5 +38,13 @@ public class MessageController {
         AdminClient adminClient = kafkaUtility.getAdminClient();
         TopicDescription topicDescription = kafkaUtility.checkTopicExist(adminClient,topic);
         return new ResponseEntity<>(topicDescription, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<Boolean> validate() throws JsonProcessingException, UnrecognizedPropertyException {
+        String message="{\"url\":\"sonoo\"}";
+//        String message="hhhh";
+        Boolean isJson = kafkaUtility.validateJson(message, SpaceCollector.class);
+        return new ResponseEntity<>(isJson, HttpStatus.CREATED);
     }
 }
